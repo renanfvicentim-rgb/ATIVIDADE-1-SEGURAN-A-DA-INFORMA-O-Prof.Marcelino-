@@ -70,13 +70,13 @@ sha256sum saida/evidencias_auditoria.txt | tee saida/evidencias_auditoria.sha256
 
 | Critério | Evidência (comando + resultado) | Conforme? | NC |
 |---|---|---|---|
-| C1 | | | |
-| C2 | | | |
-| C3 | | | |
-| C4 | | | |
+| C1 | `awk -F: '$3 == 0 {print $1, "-> UID", $3}' saida/servidor/etc/passwd` deve retornar somente `root -> UID 0`. Os dados de evidência não estão disponíveis neste checkout. | A confirmar | NC-01 se houver conta não-root com UID 0 |
+| C2 | `awk -F: '$2 == "" {print "SEM SENHA:", $1}' saida/servidor/etc/shadow` não deve retornar nenhuma conta. Os dados de evidência não estão disponíveis neste checkout. | A confirmar | NC-02 se houver conta sem senha |
+| C3 | `find saida/servidor/financeiro -type f -perm -o+w` não deve retornar arquivos. Os dados de evidência não estão disponíveis neste checkout. | A confirmar | NC-03 se houver arquivo com escrita para outros |
+| C4 | `grep -i "desligad" saida/servidor/etc/passwd` não deve retornar contas de funcionários desligados. Os dados de evidência não estão disponíveis neste checkout. | A confirmar | NC-04 se houver conta desligada |
 
 ## ❓ Perguntas
-1. Qual conta viola dois critérios ao mesmo tempo? Qual o risco?
-2. Escreva a **NC-01** de forma clara, firme e objetiva (fato, critério e efeito).
-3. Por que a auditoria foi feita numa **cópia** das configurações, e não no servidor em produção?
-4. Qual recomendação você faria para cada não conformidade?
+1. A conta é a conta não-`root` que aparecer simultaneamente no resultado do C1 (UID 0) e do C2 (sem senha). O risco é a obtenção de privilégio máximo sem autenticação, permitindo alteração ou exclusão de dados, instalação de código malicioso e comprometimento completo do servidor.
+2. **NC-01:** Foi identificada uma conta diferente de `root` com UID 0. A política determina que somente `root` pode possuir UID 0. Essa configuração concede privilégio máximo à conta e aumenta o risco de acesso administrativo indevido e comprometimento integral do servidor.
+3. A auditoria foi realizada em uma cópia para preservar a disponibilidade e a integridade do servidor em produção. Assim, a coleta não altera configurações, não interrompe serviços e permite repetir os testes, mantendo as evidências para análise e rastreabilidade.
+4. Recomendações: para C1, remover o UID 0 da conta não autorizada e revisar os privilégios; para C2, definir uma senha forte ou bloquear/remover a conta conforme a necessidade; para C3, retirar a permissão de escrita para `outros` e aplicar o princípio do menor privilégio; para C4, remover ou bloquear imediatamente as contas de funcionários desligados e revisar periodicamente as contas ativas. Após as correções, repetir os testes e registrar novas evidências com hash.
